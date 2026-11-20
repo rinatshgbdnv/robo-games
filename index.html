@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Игры программиста</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg1: #1b0b45; --bg2: #3b1a7a; --bg3: #0d3b78;
+  --card: rgba(255,255,255,.09); --line: rgba(255,255,255,.16);
+  --text: #fff; --muted: #c9bdf5;
+  --pink: #ff4fa3; --cyan: #34e7ff; --lime: #7dff6a; --gold: #ffd23f; --red: #ff4d6d;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: "Nunito", system-ui, sans-serif; color: var(--text); overflow-x: hidden;
+  background: linear-gradient(130deg, var(--bg1), var(--bg2), var(--bg3), var(--bg1));
+  background-size: 400% 400%; animation: bgmove 18s ease infinite; user-select: none;
+}
+@keyframes bgmove { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+.blob { position: fixed; border-radius: 50%; filter: blur(60px); opacity: .45; z-index: -1; animation: float 14s ease-in-out infinite; }
+.blob.a { width: 260px; height: 260px; background: var(--pink); top: -60px; left: -80px; }
+.blob.b { width: 300px; height: 300px; background: var(--cyan); bottom: -100px; right: -90px; animation-delay: -5s; }
+.blob.c { width: 200px; height: 200px; background: #8b5cff; top: 40%; left: 55%; animation-delay: -9s; }
+@keyframes float { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(40px,30px) scale(1.15); } }
+
+.screen { display: none; max-width: 520px; margin: 0 auto; padding: 14px 16px 28px; }
+.screen.on { display: block; animation: pop .35s ease; }
+@keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
+
+h1 { font-size: 28px; font-weight: 900; margin: 6px 0 2px; text-align: center;
+  background: linear-gradient(90deg, var(--gold), var(--pink), var(--cyan)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(255,79,163,.4)); }
+.sub { text-align: center; color: var(--muted); margin: 0 0 16px; font-weight: 600; }
+
+.game-card { position: relative; display: flex; gap: 14px; align-items: center; padding: 16px; margin: 12px 0; border-radius: 22px;
+  background: var(--card); border: 1px solid var(--line); backdrop-filter: blur(8px); cursor: pointer; overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,.25); transition: transform .15s; }
+.game-card:active { transform: scale(.97); }
+.game-card::before { content: ""; position: absolute; inset: 0; opacity: .35; background: var(--grad); z-index: -1; }
+.game-card .ico { font-size: 46px; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); animation: bob 3s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-6px) rotate(4deg); } }
+.game-card .name { font-size: 20px; font-weight: 900; }
+.game-card .tags { color: var(--muted); font-size: 13px; font-weight: 700; }
+.bar { height: 9px; border-radius: 9px; background: rgba(0,0,0,.3); margin-top: 8px; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 9px; background: linear-gradient(90deg, var(--lime), var(--cyan)); box-shadow: 0 0 10px var(--cyan); }
+
+.reward { margin-top: 18px; padding: 16px; border-radius: 22px; text-align: center; font-weight: 800;
+  background: linear-gradient(135deg, rgba(255,210,63,.25), rgba(255,79,163,.25)); border: 1px solid rgba(255,210,63,.5); }
+.reward small { display: block; color: var(--muted); font-weight: 700; margin-top: 6px; }
+
+.btn { border: 0; border-radius: 16px; padding: 12px 16px; font: inherit; font-weight: 900; font-size: 16px; color: #fff; cursor: pointer;
+  background: linear-gradient(180deg, #8b5cff, #5b2bd9); box-shadow: 0 5px 0 #3a168f, 0 8px 18px rgba(0,0,0,.3); transition: transform .08s, box-shadow .08s; }
+.btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #3a168f; }
+.btn.go { background: linear-gradient(180deg, #4dff9a, #10b866); box-shadow: 0 5px 0 #08703d, 0 8px 18px rgba(0,0,0,.3); }
+.btn.go:active { box-shadow: 0 1px 0 #08703d; }
+.btn.gold { background: linear-gradient(180deg, #ffe066, #ffab1a); color: #5a2d00; box-shadow: 0 5px 0 #b35f00, 0 8px 18px rgba(0,0,0,.3); }
+.btn.gold:active { box-shadow: 0 1px 0 #b35f00; }
+.btn.ghost { background: rgba(255,255,255,.12); box-shadow: none; }
+.btn:disabled { opacity: .45; }
+.btn.big { width: 100%; font-size: 18px; padding: 15px; }
+.pulse { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.04); filter: brightness(1.15); } }
+
+.top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.top .title { flex: 1; font-weight: 900; font-size: 18px; text-align: center; }
+.icon-btn { width: 42px; height: 42px; border-radius: 14px; border: 0; font-size: 20px; color: #fff; background: rgba(255,255,255,.12); cursor: pointer; }
+
+.levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 10px; }
+.lvl { aspect-ratio: 1; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 26px; font-weight: 900;
+  background: linear-gradient(160deg, rgba(255,255,255,.2), rgba(255,255,255,.05)); border: 1px solid var(--line); cursor: pointer; transition: transform .12s; }
+.lvl:active { transform: scale(.93); }
+.lvl small { font-size: 12px; letter-spacing: -1px; }
+.lvl.lock { opacity: .4; }
+.lvl.next { border-color: var(--gold); box-shadow: 0 0 18px rgba(255,210,63,.6); animation: pulse 1.6s infinite; }
+
+.stage-wrap { position: relative; border-radius: 22px; overflow: hidden; background: rgba(5,2,25,.55); border: 1px solid var(--line);
+  box-shadow: inset 0 0 40px rgba(52,231,255,.12), 0 10px 30px rgba(0,0,0,.35); }
+canvas { display: block; width: 100%; }
+.hint { margin: 10px 0; padding: 10px 14px; border-radius: 16px; background: rgba(52,231,255,.12); border: 1px solid rgba(52,231,255,.35); font-weight: 700; font-size: 15px; }
+.msg { min-height: 24px; text-align: center; font-weight: 800; margin: 6px 0; }
+.msg.bad { color: #ff9bb0; } .msg.good { color: var(--lime); }
+
+.panel { padding: 12px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); margin-top: 10px; }
+.panel-h { display: flex; justify-content: space-between; color: var(--muted); font-weight: 800; font-size: 13px; margin-bottom: 8px; }
+.prog { display: flex; flex-wrap: wrap; gap: 7px; min-height: 52px; align-items: flex-start; }
+.chip { min-width: 44px; height: 44px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; font-size: 22px;
+  background: linear-gradient(180deg, #ffffff30, #ffffff12); border: 1px solid var(--line); cursor: pointer; animation: chipin .22s ease; transition: transform .1s; }
+@keyframes chipin { from { transform: scale(.3) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.chip:active { transform: scale(.9); }
+.chip.active, .loop.active > .loop-h { box-shadow: 0 0 0 3px var(--gold), 0 0 18px var(--gold); background: rgba(255,210,63,.35); }
+.chip.bad { box-shadow: 0 0 0 3px var(--red), 0 0 18px var(--red); background: rgba(255,77,109,.4); animation: shake .4s; }
+.chip.edited { box-shadow: 0 0 0 2px var(--cyan); }
+@keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+.loop { display: inline-flex; flex-direction: column; gap: 6px; padding: 6px; border-radius: 15px; border: 2px dashed rgba(255,79,163,.6); background: rgba(255,79,163,.12); animation: chipin .22s ease; }
+.loop-h { display: flex; gap: 6px; align-items: center; border-radius: 11px; padding: 2px; touch-action: none; cursor: grab; }
+.loop-h .n, .loop-h .ic, .loop-h .x { height: 36px; min-width: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; cursor: pointer; }
+.loop-h .ic { font-size: 20px; }
+.loop-h .n { background: var(--pink); padding: 0 8px; font-size: 17px; }
+.loop-h .pm { background: rgba(255,255,255,.18); font-size: 22px; min-width: 32px; }
+.hide { display: none !important; }
+.loop-h .n.edited { box-shadow: 0 0 0 2px var(--cyan); }
+.loop-h .x { font-size: 14px; opacity: .7; }
+.loop .body { display: flex; flex-wrap: wrap; gap: 6px; min-height: 44px; min-width: 50px; }
+.empty { color: var(--muted); font-weight: 700; font-size: 14px; padding: 12px 4px; }
+.palette { position: relative; display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; border-radius: 16px; }
+.palette.trash::after { content: "🗑 Отпусти здесь — удалить"; position: absolute; inset: -4px; display: flex; align-items: center; justify-content: center;
+  border-radius: 16px; background: rgba(255,77,109,.88); border: 2px dashed #fff; font-weight: 900; font-size: 17px; }
+.chip, .palette .btn { touch-action: none; }
+.dragging { opacity: .35; }
+#prog.dragmode .body { padding-right: 38px; border-radius: 10px; background: rgba(255,255,255,.06); }
+.drop { outline: 2px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
+#ghost { position: fixed; z-index: 30; pointer-events: none; display: none; transform: translate(-50%, -85%) scale(1.15);
+  font-size: 24px; font-weight: 900; padding: 6px 10px; border-radius: 13px; background: rgba(139,92,255,.92); box-shadow: 0 8px 20px rgba(0,0,0,.5); }
+#ghost.on { display: block; } #ghost.bad { background: var(--red); }
+#slot { position: fixed; z-index: 29; width: 6px; border-radius: 3px; pointer-events: none; display: none; background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+#slot.on { display: block; }
+#finger { position: fixed; z-index: 31; pointer-events: none; display: none; font-size: 40px; line-height: 1; transform: translate(-50%, 0);
+  transition-property: left, top; transition-timing-function: ease-in-out; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); }
+#finger.on { display: block; } #finger.press { transform: translate(-50%, 0) scale(.8); }
+#finger .carry { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-size: 24px; font-weight: 900; white-space: nowrap;
+  padding: 4px 8px; border-radius: 12px; background: rgba(139,92,255,.92); }
+#finger .carry:empty { display: none; }
+.tut { margin: 10px 0; padding: 12px 14px; border-radius: 16px; font-weight: 800; font-size: 16px;
+  background: linear-gradient(135deg, rgba(255,210,63,.25), rgba(255,79,163,.25)); border: 1px solid rgba(255,210,63,.6); }
+.tut .row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.tut .row .btn { padding: 9px 14px; font-size: 15px; }
+.palette .btn { font-size: 24px; padding: 8px 0; width: 56px; }
+.controls { display: flex; gap: 8px; margin-top: 12px; }
+.controls .btn { flex: 1; padding: 13px 6px; }
+
+.rule { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 9px; margin-bottom: 8px; border-radius: 14px; background: rgba(255,255,255,.07); border: 1px solid var(--line); animation: chipin .22s; }
+.rule.active { box-shadow: 0 0 0 3px var(--gold), 0 0 18px var(--gold); }
+.rule.bad { box-shadow: 0 0 0 3px var(--red); }
+.kw { font-weight: 900; color: var(--gold); font-size: 14px; }
+.kw.else { color: var(--cyan); }
+select { font: inherit; font-weight: 800; font-size: 15px; color: #fff; background: #3a1f80; border: 1px solid var(--line); border-radius: 10px; padding: 7px 6px; }
+.rule .x { margin-left: auto; background: none; border: 0; color: #fff; opacity: .6; font-size: 16px; cursor: pointer; }
+
+.overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 10; background: rgba(10,4,30,.55); backdrop-filter: blur(4px); }
+.overlay.on { display: flex; }
+.modal { width: min(90vw, 380px); padding: 24px 20px; border-radius: 28px; text-align: center; animation: modalin .5s cubic-bezier(.2,1.6,.4,1);
+  background: linear-gradient(160deg, #5b2bd9, #ff4fa3); box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 0 40px rgba(255,79,163,.5); }
+@keyframes modalin { from { transform: scale(.4) rotate(-8deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal h2 { margin: 0 0 6px; font-size: 30px; font-weight: 900; }
+.stars { font-size: 46px; letter-spacing: 6px; margin: 8px 0; }
+.stars span { display: inline-block; animation: starin .5s cubic-bezier(.2,1.8,.4,1) backwards; }
+.stars span.off { filter: grayscale(1) brightness(.5); }
+@keyframes starin { from { transform: scale(0) rotate(-180deg); } to { transform: none; } }
+.modal p { font-weight: 700; margin: 8px 0 16px; }
+.modal .row { display: flex; gap: 10px; }
+.modal .row .btn { flex: 1; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 12px 18px; border-radius: 16px; background: #000c; font-weight: 800; z-index: 20; display: none; max-width: 90vw; text-align: center; }
+.toast.on { display: block; animation: pop .3s; }
+</style>
+</head>
+<body>
+<div class="blob a"></div><div class="blob b"></div><div class="blob c"></div>
+
+<section class="screen on" id="home">
+  <div class="top"><span style="flex:1"></span><button class="icon-btn" data-mute>🔊</button></div>
+  <h1>Игры программиста</h1>
+  <p class="sub">Научи машины слушаться твоих команд ✨</p>
+  <div id="cards"></div>
+  <div class="reward" id="reward"></div>
+</section>
+
+<section class="screen" id="levels">
+  <div class="top"><button class="icon-btn" data-back="home">←</button><div class="title" id="lv-title"></div><button class="icon-btn" data-mute>🔊</button></div>
+  <div class="levels" id="lv-grid"></div>
+</section>
+
+<section class="screen" id="play">
+  <div class="top"><button class="icon-btn" data-back="levels">←</button><div class="title" id="pl-title"></div><button class="icon-btn hide" id="b-help" aria-label="Как играть">❓</button><button class="icon-btn" data-mute>🔊</button></div>
+  <div class="stage-wrap"><canvas id="stage"></canvas></div>
+  <div class="hint" id="hint"></div>
+  <div class="tut hide" id="tut"><div id="tut-t"></div><div class="row" id="tut-b"></div></div>
+  <div class="msg" id="msg"></div>
+  <div id="editor"></div>
+  <div class="controls">
+    <button class="btn ghost" id="b-reset">↺</button>
+    <button class="btn" id="b-step">👣 По шагу</button>
+    <button class="btn go" id="b-run">▶️ Запуск</button>
+  </div>
+</section>
+
+<div class="overlay" id="win"><div class="modal">
+  <h2 id="w-title">Победа!</h2>
+  <div class="stars" id="w-stars"></div>
+  <p id="w-text"></p>
+  <div class="row"><button class="btn ghost" id="w-again">Ещё раз</button><button class="btn gold" id="w-next">Дальше ➡️</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<div id="ghost"></div><div id="slot"></div><div id="finger"><span class="carry"></span>👆</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
